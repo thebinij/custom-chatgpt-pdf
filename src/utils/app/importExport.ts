@@ -27,7 +27,7 @@ import { cleanConversationHistory } from './clean';
       return {
         version: 3,
         history: cleanConversationHistory(data),
-        folders: [],
+      
       };
     }
   
@@ -35,11 +35,6 @@ import { cleanConversationHistory } from './clean';
       return {
         version: 3,
         history: cleanConversationHistory(data.history || []),
-        folders: (data.folders || []).map((chatFolder) => ({
-          id: chatFolder.id.toString(),
-          name: chatFolder.name,
-          type: 'chat',
-        })),
       };
     }
   
@@ -99,10 +94,7 @@ import { cleanConversationHistory } from './clean';
     localStorage.setItem(
       'selectedConversation',
       JSON.stringify(conversations[conversations.length - 1]),
-    );
-  
-    localStorage.setItem('folders', JSON.stringify(cleanedData.folders));
-  
+    );  
     return cleanedData;
   };
   

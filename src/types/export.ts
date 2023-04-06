@@ -1,5 +1,4 @@
 import { Conversation, Message } from './chat';
-import { Folder } from './folder';
 
 export type SupportedExportFormats =
   | ExportFormatV1
@@ -17,19 +16,14 @@ interface ConversationV1 {
 export type ExportFormatV1 = ConversationV1[];
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-interface ChatFolder {
-  id: number;
-  name: string;
-}
+
 
 export interface ExportFormatV2 {
   history: Conversation[] | null;
-  folders: ChatFolder[] | null;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 export interface ExportFormatV3 {
   version: 3;
-  history: Conversation[];
-  folders: Folder[];
+  history: Conversation[]
 }

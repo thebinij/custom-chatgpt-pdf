@@ -8,9 +8,7 @@ interface Props {
 
 export const ClearConversations: FC<Props> = ({ onClearConversations }) => {
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
-
-
-
+  
   const handleClearConversations = () => {
     onClearConversations();
     setIsConfirming(false);

@@ -16,7 +16,7 @@ interface Props {
   ) => void;
 }
 
-export const Conversations: FC<Props> = ({
+export const ConversationList: FC<Props> = ({
   loading,
   conversations,
   selectedConversation,

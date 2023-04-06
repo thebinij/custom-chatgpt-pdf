@@ -26,12 +26,7 @@ export const cleanSelectedConversation = (conversation: Conversation) => {
     };
   }
 
-  if (!updatedConversation.folderId) {
-    updatedConversation = {
-      ...updatedConversation,
-      folderId: updatedConversation.folderId || null,
-    };
-  }
+
 
   return updatedConversation;
 };
@@ -55,10 +50,6 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
 
       if (!conversation.prompt) {
         conversation.prompt = DEFAULT_SYSTEM_PROMPT;
-      }
-
-      if (!conversation.folderId) {
-        conversation.folderId = null;
       }
 
       acc.push(conversation);

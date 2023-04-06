@@ -17,7 +17,7 @@ interface Props {
   onImportConversations: (data: SupportedExportFormats) => void;
 }
 
-export const ChatbarSettings: FC<Props> = ({
+export const Settings: FC<Props> = ({
   lightMode,
   apiKey,
   conversationsCount,

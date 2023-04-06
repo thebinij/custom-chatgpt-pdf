@@ -20,6 +20,5 @@ export interface Message {
     messages: Message[];
     model: OpenAIModel;
     prompt: string;
-    folderId: string | null;
   }
   
