@@ -29,8 +29,7 @@ import {
   cleanConversationHistory,
   cleanSelectedConversation,
 } from "@/utils/app/clean";
-
-
+import { PineConeVar } from "@/types/pinecone";
 
 interface HomeProps {
   serverSideApiKeyIsSet: boolean;
@@ -47,6 +46,11 @@ const Home: React.FC<HomeProps> = ({
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
   const [models, setModels] = useState<OpenAIModel[]>([]);
   const [apiKey, setApiKey] = useState<string>("");
+  const [pineconeVar, setPineconeVar] = useState<PineConeVar>({
+    apikey:"",
+    index:"",
+    environment:""
+  })
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation>();
@@ -67,6 +71,12 @@ const Home: React.FC<HomeProps> = ({
     setApiKey(apiKey);
     localStorage.setItem("apiKey", apiKey);
   };
+
+  const handlePineConeVarChange = (pinecone: PineConeVar) => {
+    setPineconeVar(pinecone);
+    localStorage.setItem("pineconeVar", JSON.stringify(pinecone));
+  };
+
   const handleToggleChatbar = () => {
     setShowSidebar(!showSidebar);
     localStorage.setItem("showChatbar", JSON.stringify(!showSidebar));
@@ -402,6 +412,9 @@ const Home: React.FC<HomeProps> = ({
       fetchModels("");
     }
 
+    const pineconeVar = localStorage.getItem("pineconeVar");
+    if(pineconeVar) setPineconeVar(JSON.parse(pineconeVar))
+
     if (window.innerWidth < 640) {
       setShowSidebar(false);
     }
@@ -508,6 +521,8 @@ const Home: React.FC<HomeProps> = ({
                 conversation={selectedConversation}
                 messageIsStreaming={messageIsStreaming}
                 apiKey={apiKey}
+                pineconeVar={pineconeVar}
+                onPineConeVarChange={handlePineConeVarChange}
                 serverSideApiKeyIsSet={serverSideApiKeyIsSet}
                 defaultModelId={defaultModelId}
                 modelError={modelError}
@@ -517,8 +532,8 @@ const Home: React.FC<HomeProps> = ({
                 onSend={handleSend}
                 onUpdateConversation={handleUpdateConversation}
                 onEditMessage={handleEditMessage}
-                stopConversationRef={stopConversationRef}
-              />
+                stopConversationRef={stopConversationRef} 
+           />
             </div>
           </div>
         </main>
