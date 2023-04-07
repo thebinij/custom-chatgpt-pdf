@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "type": "module",
   "dependencies": {
     "@dqbd/tiktoken": "^1.0.3",
     "@pinecone-database/pinecone": "^0.0.10",
@@ -18,7 +19,6 @@
     "eslint": "8.37.0",
     "eslint-config-next": "13.2.4",
     "eventsource-parser": "^1.0.0",
-    "langchain": "0.0.41",
     "next": "13.2.4",
     "pdf-parse": "^1.1.1",
     "react": "18.2.0",

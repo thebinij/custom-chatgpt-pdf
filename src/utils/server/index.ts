@@ -5,7 +5,8 @@ import {
   ParsedEvent,
   ReconnectInterval,
 } from 'eventsource-parser';
-import { OPENAI_API_HOST } from '../app/const';
+import { DEFAULT_SYSTEM_PROMPT, OPENAI_API_HOST } from '../app/const';
+import { PineConeVar } from '@/types/pinecone';
 
 export class OpenAIError extends Error {
   type: string;
@@ -20,6 +21,48 @@ export class OpenAIError extends Error {
     this.code = code;
   }
 }
+export const OpenAIEmbeddings= async (
+  key: string,
+  current: Message,
+) => {
+  const res = await fetch(`${OPENAI_API_HOST}/v1/embeddings `, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${key ? key : process.env.OPENAI_API_KEY}`,
+      ...(process.env.OPENAI_ORGANIZATION && {
+        'OpenAI-Organization': process.env.OPENAI_ORGANIZATION,
+      }),
+    },
+    method: 'POST',
+    body: JSON.stringify({
+      model: "text-embedding-ada-002",
+      input: current.content
+    }),
+  });
+
+  const decoder = new TextDecoder();
+
+  if (res.status !== 200) {
+    const result = await res.json();
+    if (result.error) {
+      throw new OpenAIError(
+        result.error.message,
+        result.error.type,
+        result.error.param,
+        result.error.code,
+      );
+    } else {
+      throw new Error(
+        `OpenAI API returned an error: ${
+          decoder.decode(result?.value) || result.statusText
+        }`,
+      );
+    }
+  }
+
+  return await res.json()
+
+};
 
 export const OpenAIStream = async (
   model: OpenAIModel,
@@ -45,8 +88,8 @@ export const OpenAIStream = async (
         },
         ...messages,
       ],
-      max_tokens: 1000,
-      temperature: 1,
+      max_tokens: 2000,
+      temperature: 0,
       stream: true,
     }),
   });
@@ -103,4 +146,57 @@ export const OpenAIStream = async (
   });
 
   return stream;
+};
+
+export const PineConeAPI= async (pinconeVar:PineConeVar,query:string)=>{
+  const res = await fetch(
+    `https://${pinconeVar.index}-2c91f9c.svc.${pinconeVar.environment}.pinecone.io/${query}`, {
+      method: 'POST',
+      headers:  {accept: 'application/json', 'content-type': 'application/json', 'Api-Key': pinconeVar.apikey },
+      body:  JSON.stringify({
+        includeValues: true,
+        includeMetadata: 'false',
+        namespace: 'pdf-test',
+        topK: 5
+      })
+    }
+    )
+    const decoder = new TextDecoder();
+    if (res.status !== 200) {
+      const result = await res.json();
+
+      throw new Error(
+        `Pinecone API returned an error: ${
+          decoder.decode(result?.value) || result.statusText
+        }`,
+      );
+    }
+    console.log(res.status)
+    const responseText = await res.text();
+    console.log('Response from Pinecone API:', responseText); // Debugging statement
+
+    if (!responseText) {
+      throw new Error('Failed to parse response as JSON: Response is empty');
+    }
+  
+  try {
+    const data = JSON.parse(responseText);
+    console.log(data);
+    return data;
+  } catch (error) {
+    throw new Error(`Failed to parse response as JSON: ${responseText}`);
+  }
+ 
+}
+
+
+export const createSystemPrompt = (question:string, contexts:string[]) => {
+
+  const context = contexts.join('\n\n');
+
+  // Replace "{question}" and "{context}" placeholders in the default system prompt
+  const systemPrompt = DEFAULT_SYSTEM_PROMPT
+    .replace('{question}', question)
+    .replace('{context}', context);
+  return systemPrompt;
 };

@@ -4,7 +4,6 @@ import { ErrorMessage } from "@/types/error";
 import { OpenAIModel, OpenAIModelID } from "@/types/openai";
 import { Prompt } from "@/types/prompt";
 import { IconArrowDown, IconClearAll, IconSettings } from "@tabler/icons-react";
-
 import {
   FC,
   memo,
@@ -20,7 +19,6 @@ import { Spinner } from "../Spinner";
 import { ChatLoader } from "./ChatLoader";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
-import { SystemPrompt } from "./SystemPrompt";
 import { ModelSelect } from "./ModelSelect";
 import { PineconeSetting } from "./PineconeSettings";
 import { PineConeVar } from "@/types/pinecone";
@@ -257,17 +255,6 @@ export const ChatSection: FC<Props> = memo(
                             <PineconeSetting
                               pineconeVar={pineconeVar}
                               handlePinecone={onPineConeVarChange}
-                            />
-
-                            <SystemPrompt
-                              conversation={conversation}
-                              prompts={prompts}
-                              onChangePrompt={(prompt) =>
-                                onUpdateConversation(conversation, {
-                                  key: "prompt",
-                                  value: prompt,
-                                })
-                              }
                             />
                           </div>
                         )}

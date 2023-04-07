@@ -55,6 +55,8 @@ const Home: React.FC<HomeProps> = ({
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation>();
   const [modelError, setModelError] = useState<ErrorMessage |null>(null)
+
+  const [showRightBar, setShowRightBar] = useState<boolean>(true);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [currentMessage, setCurrentMessage] = useState<Message>();
   const [messageIsStreaming, setMessageIsStreaming] = useState<boolean>(false);
@@ -81,6 +83,12 @@ const Home: React.FC<HomeProps> = ({
     setShowSidebar(!showSidebar);
     localStorage.setItem("showChatbar", JSON.stringify(!showSidebar));
   };
+
+  const handleToggleRightbar = () => {
+    setShowRightBar(!showRightBar);
+    localStorage.setItem('showRightBar', JSON.stringify(!showRightBar));
+  };
+
 
   // CONVERSATION OPERATIONS  --------------------------------------------
   const handleNewConversation = () => {
@@ -489,7 +497,7 @@ const Home: React.FC<HomeProps> = ({
                   onNewConversation={handleNewConversation}
                   onSelectConversation={handleSelectConversation}
                   onDeleteConversation={handleDeleteConversation}
-                  onToggleSidebar={handleToggleChatbar}
+              
                   onUpdateConversation={handleUpdateConversation}
                   onApiKeyChange={handleApiKeyChange}
                   onClearConversations={handleClearConversations}
@@ -535,6 +543,32 @@ const Home: React.FC<HomeProps> = ({
                 stopConversationRef={stopConversationRef} 
            />
             </div>
+
+            {/* {showRightBar ? (
+              <div>
+                <RightBar
+                  prompts={prompts}
+                  pineconeVar={pineconeVar}
+                />
+                <button
+                  className="fixed top-5 right-[270px] z-50 h-7 w-7 hover:text-gray-400 dark:text-white dark:hover:text-gray-300 sm:top-0.5 sm:right-[270px] sm:h-8 sm:w-8 sm:text-neutral-700"
+                  onClick={handleToggleRightbar}
+                >
+                  <IconArrowBarRight />
+                </button>
+                <div
+                  onClick={handleToggleRightbar}
+                  className="absolute top-0 left-0 z-10 w-full h-full bg-black opacity-70 sm:hidden"
+                ></div>
+              </div>
+            ) : (
+              <button
+                className="fixed top-2.5 right-4 z-50 h-7 w-7 text-white hover:text-gray-400 dark:text-white dark:hover:text-gray-300 sm:top-0.5 sm:right-4 sm:h-8 sm:w-8 sm:text-neutral-700"
+                onClick={handleToggleRightbar}
+              >
+                <IconArrowBarLeft />
+              </button>
+            )} */}
           </div>
         </main>
       )}

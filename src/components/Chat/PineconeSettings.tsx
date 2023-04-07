@@ -59,6 +59,7 @@ export const PineconeSetting: FC<Props> = ({ pineconeVar, handlePinecone }) => {
      )}
         </div>
       </div>
+      <div className="grid grid-flow-col gap-2">
       <div className="flex flex-col">
         <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
           Pinecone Environment
@@ -86,7 +87,11 @@ export const PineconeSetting: FC<Props> = ({ pineconeVar, handlePinecone }) => {
             placeholder="Index Name"
           />
         </div>
-        <button
+        
+      </div>
+      </div>
+      <div className="flex flex-col">
+      <button
           disabled={!active || !isChange}
           className={`h-[40px] mt-4 rounded-md border border-neutral-300 px-4 py-1 text-sm font-medium text-neutral-700 
     ${
@@ -98,8 +103,9 @@ export const PineconeSetting: FC<Props> = ({ pineconeVar, handlePinecone }) => {
           onClick={(e) => handleSave(e)}
         >
           {isChange ? "Save" : "Saved"}
-        </button>
-      </div>
+        </button></div>
+  
+    
     </>
   );
 };
