@@ -5,7 +5,7 @@ import { Navbar } from "@/components/Mobile/Navbar";
 import { LeftBar } from "@/components/LeftSideBar/LeftBar";
 import { ChatSection } from "@/components/Chat/ChatSection";
 import { v4 as uuidv4 } from "uuid";
-import { IconArrowBarLeft, IconArrowBarRight } from "@tabler/icons-react";
+import {  IconArrowBarRight } from "@tabler/icons-react";
 import { ChatBody, Conversation, Message } from "@/types/chat";
 import { ErrorMessage } from "@/types/error";
 import { KeyValuePair } from "@/types/data";
@@ -24,7 +24,6 @@ import {
 } from "@/utils/app/converstion";
 import { DEFAULT_SYSTEM_PROMPT, FETCHING_ERROR_MSG } from "@/utils/app/const";
 import { exportData, importData } from "@/utils/app/importExport";
-
 import {
   cleanConversationHistory,
   cleanSelectedConversation,
@@ -49,14 +48,14 @@ const Home: React.FC<HomeProps> = ({
   const [pineconeVar, setPineconeVar] = useState<PineConeVar>({
     apikey:"",
     index:"",
+    projectId:"",
     environment:""
   })
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation>();
   const [modelError, setModelError] = useState<ErrorMessage |null>(null)
-
-  const [showRightBar, setShowRightBar] = useState<boolean>(true);
+  // const [showRightBar, setShowRightBar] = useState<boolean>(true);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [currentMessage, setCurrentMessage] = useState<Message>();
   const [messageIsStreaming, setMessageIsStreaming] = useState<boolean>(false);
@@ -84,10 +83,10 @@ const Home: React.FC<HomeProps> = ({
     localStorage.setItem("showChatbar", JSON.stringify(!showSidebar));
   };
 
-  const handleToggleRightbar = () => {
-    setShowRightBar(!showRightBar);
-    localStorage.setItem('showRightBar', JSON.stringify(!showRightBar));
-  };
+  // const handleToggleRightbar = () => {
+  //   setShowRightBar(!showRightBar);
+  //   localStorage.setItem('showRightBar', JSON.stringify(!showRightBar));
+  // };
 
 
   // CONVERSATION OPERATIONS  --------------------------------------------
@@ -259,6 +258,8 @@ const Home: React.FC<HomeProps> = ({
     setModelError(null);
   };
 
+
+
   // FETCH RESPONSE ----------------------------------------------
   const handleSend = async (message: Message, deleteCount = 0) => {
     if (selectedConversation) {
@@ -405,7 +406,28 @@ const Home: React.FC<HomeProps> = ({
       setMessageIsStreaming(false);
     }
   };
+
+  // EFFECTS  --------------------------------------------
+
+  useEffect(() => {
+    if (apiKey) {
+      fetchModels(apiKey);
+    }
+  }, [apiKey]);
   
+  useEffect(() => {
+    if (currentMessage) {
+      handleSend(currentMessage);
+      setCurrentMessage(undefined);
+    }
+  }, [currentMessage]);
+
+  useEffect(() => {
+    if (window.innerWidth < 640) {
+      setShowSidebar(false);
+    }
+  }, [selectedConversation]);
+
   // ON LOAD --------------------------------------------
   useEffect(() => {
     const theme = localStorage.getItem("theme");
@@ -493,24 +515,17 @@ const Home: React.FC<HomeProps> = ({
                   lightMode={lightMode}
                   selectedConversation={selectedConversation}
                   apiKey={apiKey}
+                  onToggleSidebar={handleToggleChatbar}
                   onToggleLightMode={handleLightMode}
                   onNewConversation={handleNewConversation}
                   onSelectConversation={handleSelectConversation}
                   onDeleteConversation={handleDeleteConversation}
-              
                   onUpdateConversation={handleUpdateConversation}
                   onApiKeyChange={handleApiKeyChange}
                   onClearConversations={handleClearConversations}
                   onExportConversations={handleExportData}
                   onImportConversations={handleImportConversations}
                 />
-
-                <button
-                  className="fixed top-5 left-[270px] z-50 h-7 w-7 hover:text-gray-400 dark:text-white dark:hover:text-gray-300 sm:top-0.5 sm:left-[270px] sm:h-8 sm:w-8 sm:text-neutral-700"
-                  onClick={handleToggleChatbar}
-                >
-                  <IconArrowBarLeft />
-                </button>
                 <div
                   onClick={handleToggleChatbar}
                   className="absolute top-0 left-0 z-10 w-full h-full bg-black opacity-70 sm:hidden"

@@ -25,3 +25,13 @@ export const FETCHING_ERROR_MSG: ErrorMessage = {
     "If you completed this step, OpenAI may be experiencing issues.",
   ],
 };
+
+
+export const FETCHING_ERROR_PINECONE: ErrorMessage = {
+  title: "Error fetching pinecone stats.",
+  code: null,
+  messageLines: [
+    "Make sure your Pinecone API key, Index Name, environment and projectId is set correctly.",
+    "If you completed this step, Pinecone may be experiencing issues.",
+  ],
+};

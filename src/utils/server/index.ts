@@ -148,46 +148,6 @@ export const OpenAIStream = async (
   return stream;
 };
 
-export const PineConeAPI= async (pinconeVar:PineConeVar,query:string)=>{
-  const res = await fetch(
-    `https://${pinconeVar.index}-2c91f9c.svc.${pinconeVar.environment}.pinecone.io/${query}`, {
-      method: 'POST',
-      headers:  {accept: 'application/json', 'content-type': 'application/json', 'Api-Key': pinconeVar.apikey },
-      body:  JSON.stringify({
-        includeValues: true,
-        includeMetadata: 'false',
-        namespace: 'pdf-test',
-        topK: 5
-      })
-    }
-    )
-    const decoder = new TextDecoder();
-    if (res.status !== 200) {
-      const result = await res.json();
-
-      throw new Error(
-        `Pinecone API returned an error: ${
-          decoder.decode(result?.value) || result.statusText
-        }`,
-      );
-    }
-    console.log(res.status)
-    const responseText = await res.text();
-    console.log('Response from Pinecone API:', responseText); // Debugging statement
-
-    if (!responseText) {
-      throw new Error('Failed to parse response as JSON: Response is empty');
-    }
-  
-  try {
-    const data = JSON.parse(responseText);
-    console.log(data);
-    return data;
-  } catch (error) {
-    throw new Error(`Failed to parse response as JSON: ${responseText}`);
-  }
- 
-}
 
 
 export const createSystemPrompt = (question:string, contexts:string[]) => {

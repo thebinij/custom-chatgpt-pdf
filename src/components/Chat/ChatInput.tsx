@@ -11,7 +11,6 @@ import {
   useState,
 } from "react";
 
-
 import { Prompt } from "@/types/prompt";
 import { PromptList } from "./PromptList";
 import { VariableModal } from "./VariableModal";
@@ -249,7 +248,7 @@ export const ChatInput: FC<Props> = ({
 
         {!messageIsStreaming && !conversationIsEmpty && (
           <button
-            className="absolute left-0 right-0 mx-auto mt-2 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:top-0"
+            className="absolute left-0 right-0 mx-auto mt-2 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white top-[-20px] md:top-0"
             onClick={onRegenerate}
           >
             <IconRepeat size={16} />
@@ -274,7 +273,7 @@ export const ChatInput: FC<Props> = ({
             placeholder={
               loading
                 ? `Waiting for response...`
-                : `Ask any think about the source documents`
+                : `Ask anything about your source documents`
             }
             value={content}
             rows={1}

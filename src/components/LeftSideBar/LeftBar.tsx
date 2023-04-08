@@ -3,6 +3,8 @@ import { Conversation } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
 import { SupportedExportFormats } from '@/types/export';
 import {
+  IconArrowBarLeft,
+  IconArrowBarRight,
   IconMessagesOff,
   IconPlus,
 } from '@tabler/icons-react';
@@ -17,6 +19,7 @@ interface Props {
   selectedConversation: Conversation;
   apiKey: string;
   onNewConversation: () => void;
+  onToggleSidebar:() => void;
   onToggleLightMode: (mode: 'light' | 'dark') => void;
   onSelectConversation: (conversation: Conversation) => void;
   onDeleteConversation: (conversation: Conversation) => void;
@@ -39,6 +42,7 @@ export const LeftBar: FC<Props> = ({
   onNewConversation,
   onToggleLightMode,
   onSelectConversation,
+  onToggleSidebar,
   onDeleteConversation,
   onUpdateConversation,
   onApiKeyChange,
@@ -107,7 +111,7 @@ export const LeftBar: FC<Props> = ({
     >
       <div className="flex items-center">
         <button
-          className="flex w-[245px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-[14px] leading-normal text-white transition-colors duration-200 hover:bg-gray-500/10"
+          className="flex w-[200px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-[14px] leading-normal text-white transition-colors duration-200 hover:bg-gray-500/10"
           onClick={() => {
             onNewConversation();
             setSearchTerm('');
@@ -116,7 +120,12 @@ export const LeftBar: FC<Props> = ({
           <IconPlus size={18} />
           New chat
         </button>
-
+        <IconArrowBarLeft
+          className="flex p-1 ml-1 cursor-pointer text-neutral-300 hover:text-neutral-400"
+          size={32}
+          onClick={onToggleSidebar}
+        />
+      
       </div>
 
       {conversations.length > 1 && (
