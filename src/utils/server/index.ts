@@ -6,7 +6,6 @@ import {
   ReconnectInterval,
 } from 'eventsource-parser';
 import { DEFAULT_SYSTEM_PROMPT, OPENAI_API_HOST } from '../app/const';
-import { PineConeVar } from '@/types/pinecone';
 
 export class OpenAIError extends Error {
   type: string;
@@ -89,7 +88,7 @@ export const OpenAIStream = async (
         ...messages,
       ],
       max_tokens: 2000,
-      temperature: 0,
+      temperature: 0.5,
       stream: true,
     }),
   });
@@ -141,6 +140,7 @@ export const OpenAIStream = async (
 
       for await (const chunk of res.body as any) {
         parser.feed(decoder.decode(chunk));
+        
       }
     },
   });

@@ -3,24 +3,19 @@ import { OpenAIModel } from "@/types/openai";
 import { IconPlayerStop, IconRepeat, IconSend } from "@tabler/icons-react";
 import {
   FC,
-  KeyboardEvent,
   MutableRefObject,
-  useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
 
-import { Prompt } from "@/types/prompt";
-import { PromptList } from "./PromptList";
-import { VariableModal } from "./VariableModal";
+
 
 interface Props {
   messageIsStreaming: boolean;
   model: OpenAIModel;
   conversationIsEmpty: boolean;
   messages: Message[];
-  prompts: Prompt[];
   onSend: (message: Message) => void;
   onRegenerate: () => void;
   stopConversationRef: MutableRefObject<boolean>;
@@ -32,7 +27,6 @@ export const ChatInput: FC<Props> = ({
   model,
   conversationIsEmpty,
   messages,
-  prompts,
   onSend,
   onRegenerate,
   stopConversationRef,
@@ -42,17 +36,11 @@ export const ChatInput: FC<Props> = ({
   const [sourceDocs, setSourceDocs] = useState<Document[]>([]);
   const [content, setContent] = useState<string>();
   const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [showPromptList, setShowPromptList] = useState(false);
   const [activePromptIndex, setActivePromptIndex] = useState(0);
-  const [promptInputValue, setPromptInputValue] = useState("");
   const [variables, setVariables] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-
   const promptListRef = useRef<HTMLUListElement | null>(null);
 
-  const filteredPrompts = prompts.filter((prompt) =>
-    prompt.name.toLowerCase().includes(promptInputValue.toLowerCase())
-  );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -66,7 +54,6 @@ export const ChatInput: FC<Props> = ({
     }
 
     setContent(value);
-    updatePromptListVisibility(value);
   };
 
   const handleSend = () => {
@@ -102,52 +89,8 @@ export const ChatInput: FC<Props> = ({
     return mobileRegex.test(userAgent);
   };
 
-  const handleInitModal = () => {
-    const selectedPrompt = filteredPrompts[activePromptIndex];
-    if (selectedPrompt) {
-      setContent((prevContent) => {
-        const newContent = prevContent?.replace(
-          /\/\w*$/,
-          selectedPrompt.content
-        );
-        return newContent;
-      });
-      handlePromptSelect(selectedPrompt);
-    }
-    setShowPromptList(false);
-  };
+ 
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (showPromptList) {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setActivePromptIndex((prevIndex) =>
-          prevIndex < prompts.length - 1 ? prevIndex + 1 : prevIndex
-        );
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setActivePromptIndex((prevIndex) =>
-          prevIndex > 0 ? prevIndex - 1 : prevIndex
-        );
-      } else if (e.key === "Tab") {
-        e.preventDefault();
-        setActivePromptIndex((prevIndex) =>
-          prevIndex < prompts.length - 1 ? prevIndex + 1 : 0
-        );
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        handleInitModal();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        setShowPromptList(false);
-      } else {
-        setActivePromptIndex(0);
-      }
-    } else if (e.key === "Enter" && !isTyping && !isMobile() && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
 
   const parseVariables = (content: string) => {
     const regex = /{{(.*?)}}/g;
@@ -161,32 +104,7 @@ export const ChatInput: FC<Props> = ({
     return foundVariables;
   };
 
-  const updatePromptListVisibility = useCallback((text: string) => {
-    const match = text.match(/\/\w*$/);
 
-    if (match) {
-      setShowPromptList(true);
-      setPromptInputValue(match[0].slice(1));
-    } else {
-      setShowPromptList(false);
-      setPromptInputValue("");
-    }
-  }, []);
-
-  const handlePromptSelect = (prompt: Prompt) => {
-    const parsedVariables = parseVariables(prompt.content);
-    setVariables(parsedVariables);
-
-    if (parsedVariables.length > 0) {
-      setIsModalVisible(true);
-    } else {
-      setContent((prevContent) => {
-        const updatedContent = prevContent?.replace(/\/\w*$/, prompt.content);
-        return updatedContent;
-      });
-      updatePromptListVisibility(prompt.content);
-    }
-  };
 
   const handleSubmit = (updatedVariables: string[]) => {
     const newContent = content?.replace(/{{(.*?)}}/g, (match, variable) => {
@@ -219,12 +137,7 @@ export const ChatInput: FC<Props> = ({
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        promptListRef.current &&
-        !promptListRef.current.contains(e.target as Node)
-      ) {
-        setShowPromptList(false);
-      }
+      
     };
 
     window.addEventListener("click", handleOutsideClick);
@@ -239,7 +152,7 @@ export const ChatInput: FC<Props> = ({
       <div className="stretch mx-2 mt-4 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
         {messageIsStreaming && (
           <button
-            className="absolute left-0 right-0 mx-auto mt-2 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:top-0"
+            className="absolute left-0 right-0 mx-auto mt-2 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white  top-[-20px] md:top-0"
             onClick={handleStopConversation}
           >
             <IconPlayerStop size={16} /> Stop Generating
@@ -280,7 +193,6 @@ export const ChatInput: FC<Props> = ({
             onCompositionStart={() => setIsTyping(true)}
             onCompositionEnd={() => setIsTyping(false)}
             onChange={handleChange}
-            onKeyDown={handleKeyDown}
           />
           <button
             className="absolute p-1 rounded-sm right-2 top-2 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
@@ -288,27 +200,6 @@ export const ChatInput: FC<Props> = ({
           >
             <IconSend size={18} />
           </button>
-
-          {showPromptList && prompts.length > 0 && (
-            <div className="absolute w-full bottom-12">
-              <PromptList
-                activePromptIndex={activePromptIndex}
-                prompts={filteredPrompts}
-                onSelect={handleInitModal}
-                onMouseOver={setActivePromptIndex}
-                promptListRef={promptListRef}
-              />
-            </div>
-          )}
-
-          {isModalVisible && (
-            <VariableModal
-              prompt={prompts[activePromptIndex]}
-              variables={variables}
-              onSubmit={handleSubmit}
-              onClose={() => setIsModalVisible(false)}
-            />
-          )}
         </div>
       </div>
       <div className="px-3 pt-2 pb-3 text-center text-[12px] text-black/50 dark:text-white/50 md:px-4 md:pt-3 md:pb-6">

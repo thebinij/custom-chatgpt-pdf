@@ -2,7 +2,6 @@ import { Conversation, Message } from "@/types/chat";
 import { KeyValuePair } from "@/types/data";
 import { ErrorMessage } from "@/types/error";
 import { OpenAIModel, OpenAIModelID } from "@/types/openai";
-import { Prompt } from "@/types/prompt";
 import { IconArrowDown, IconClearAll, IconSettings } from "@tabler/icons-react";
 import {
   FC,
@@ -21,20 +20,21 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { ModelSelect } from "./ModelSelect";
 import { PineconeSetting } from "./PineconeSettings";
-import { PineConeVar } from "@/types/pinecone";
+import { PineConeEnv, PineconeStats } from "@/types/pinecone";
 
 interface Props {
   conversation: Conversation;
   models: OpenAIModel[];
+  pineconeStats: PineconeStats | null;
+  pineconeError:ErrorMessage | null;
   apiKey: string;
-  pineconeVar: PineConeVar;
-  onPineConeVarChange: (pinecone: PineConeVar) => void;
+  pineconeEnv: PineConeEnv;
+  onPineconeEnvChange: (pinecone: PineConeEnv) => void;
   serverSideApiKeyIsSet: boolean;
   defaultModelId: OpenAIModelID;
   messageIsStreaming: boolean;
   modelError: ErrorMessage | null;
   loading: boolean;
-  prompts: Prompt[];
   onSend: (message: Message, deleteCount?: number) => void;
   onUpdateConversation: (
     conversation: Conversation,
@@ -48,15 +48,16 @@ export const ChatSection: FC<Props> = memo(
   ({
     conversation,
     models,
+    pineconeStats,
     apiKey,
     serverSideApiKeyIsSet,
-    pineconeVar,
-    onPineConeVarChange,
+    pineconeEnv,
+    onPineconeEnvChange,
     defaultModelId,
     messageIsStreaming,
+    pineconeError,
     modelError,
     loading,
-    prompts,
     onSend,
     onUpdateConversation,
     onEditMessage,
@@ -71,6 +72,7 @@ export const ChatSection: FC<Props> = memo(
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
 
     const scrollToBottom = useCallback(() => {
       if (autoScrollEnabled) {
@@ -119,6 +121,7 @@ export const ChatSection: FC<Props> = memo(
     };
     const throttledScrollDown = throttle(scrollDown, 250);
 
+
     // appear scroll down button only when user scrolls up
 
     useEffect(() => {
@@ -151,6 +154,7 @@ export const ChatSection: FC<Props> = memo(
         }
       };
     }, [messagesEndRef]);
+
 
     return (
       <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
@@ -190,11 +194,13 @@ export const ChatSection: FC<Props> = memo(
           <ErrorMessageDiv error={modelError} />
         ) : (
           <>
-            {!pineconeVar.apikey ? (
+            {!pineconeEnv.apikey ? (
               <div className="mx-auto flex h-full w-[350px] flex-col justify-center space-y-6 sm:w-[600px] px-2">
                 <PineconeSetting
-                  pineconeVar={pineconeVar}
-                  handlePinecone={onPineConeVarChange}
+                  pineconeEnv={pineconeEnv}
+                  pineconeStats={pineconeStats}
+                  pineconeError={pineconeError}
+                  onPineconeEnvChange={onPineconeEnvChange}
                 />
                 <div className="text-center text-gray-500 dark:text-gray-400">
                   <div className="mb-2">
@@ -253,8 +259,10 @@ export const ChatSection: FC<Props> = memo(
                               }
                             />
                             <PineconeSetting
-                              pineconeVar={pineconeVar}
-                              handlePinecone={onPineConeVarChange}
+                              pineconeEnv={pineconeEnv}
+                              pineconeStats={pineconeStats}
+                              pineconeError={pineconeError}
+                              onPineconeEnvChange={onPineconeEnvChange}
                             />
                           </div>
                         )}
@@ -292,8 +300,10 @@ export const ChatSection: FC<Props> = memo(
                               }
                             />
                             <PineconeSetting
-                              pineconeVar={pineconeVar}
-                              handlePinecone={onPineConeVarChange}
+                              pineconeEnv={pineconeEnv}
+                              pineconeStats={pineconeStats}
+                              pineconeError={pineconeError}
+                              onPineconeEnvChange={onPineconeEnvChange}
                             />
                           </div>
                         </div>
@@ -325,7 +335,6 @@ export const ChatSection: FC<Props> = memo(
                   conversationIsEmpty={conversation.messages.length === 0}
                   messages={conversation.messages}
                   model={conversation.model}
-                  prompts={prompts}
                   onSend={(message: any) => {
                     setCurrentMessage(message);
                     onSend(message);

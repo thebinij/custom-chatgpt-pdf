@@ -1,4 +1,5 @@
 import { OpenAIModel } from "./openai";
+import { PineConeEnv } from "./pinecone";
 
 export interface Message {
     role: Role;
@@ -10,8 +11,8 @@ export interface Message {
   export interface ChatBody {
     model: OpenAIModel;
     messages: Message[];
-    key: string;
-    prompt: string;
+    openAIkey: string;
+    pineconeEnv: PineConeEnv;
   }
   
   export interface Conversation {
@@ -19,6 +20,5 @@ export interface Message {
     name: string;
     messages: Message[];
     model: OpenAIModel;
-    prompt: string;
   }
   

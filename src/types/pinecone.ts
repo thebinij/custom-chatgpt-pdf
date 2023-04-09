@@ -1,9 +1,6 @@
-export interface PineConeVar {
+export interface PineConeEnv {
     apikey:string;
-    index:string;
-    projectId?:string;
-    nameSpace?:string;
-    environment:string;
+    indexURL:string;
   }
   interface NamespaceInfo {
     vectorCount: number;

@@ -1,4 +1,4 @@
-import { PineConeVar, PineconeStats } from "@/types/pinecone";
+import { PineConeEnv, PineconeStats } from "@/types/pinecone";
 
 export const config = {
   runtime: "edge",
@@ -6,10 +6,11 @@ export const config = {
 
 const handler = async (req: Request): Promise<Response> => {
   try {
-    const { index, projectId, environment, apikey } = (await req.json()) as PineConeVar;
+    const { indexURL, apikey } = (await req.json()) as PineConeEnv;
+    const cleanedIndexURL = indexURL.startsWith("https://") ? indexURL.slice(8) : indexURL;
     
     const response = await fetch(
-      `https://${index}-${projectId}.svc.${environment}.pinecone.io/describe_index_stats`,
+      `https://${cleanedIndexURL}/describe_index_stats`,
       {
         method: "POST",
         headers: {

@@ -1,13 +1,12 @@
-import { PineConeVar } from '@/types/pinecone';
 import { PineconeClient } from '@pinecone-database/pinecone';
 
-export async function initPinecone(pineconeVar:PineConeVar) {
+export async function initPinecone(environment:string, apiKey:string) {
   try {
     const pinecone = new PineconeClient();
-
+   
     await pinecone.init({
-      environment: pineconeVar.environment ?? '', //this is in the dashboard
-      apiKey: pineconeVar.apikey?? '',
+      environment: environment ?? '', //this is in the dashboard
+      apiKey: apiKey?? '',
     });
 
     return pinecone;

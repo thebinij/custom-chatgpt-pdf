@@ -13,17 +13,18 @@ export const config = {
 
 const handler = async (req: Request): Promise<Response> => {
   try {
-    const pineVar={
-      apikey:"a2a4b76f-9a59-4350-99aa-b1012fc5c60b",
-      index:"indexnew",
-      environment:"eu-west1-gcp"
-    }
-    const pinecone = await initPinecone(pineVar)
-    const { model, messages, key, prompt } = (await req.json()) as ChatBody;
+    const { model, messages, pineconeEnv, openAIkey} = (await req.json()) as ChatBody;
+    const URL = pineconeEnv.indexURL;
+    const parts = URL.split("."); // Split the URL by dot
+    const indexname = parts[0].split("-")[0]
+    const envrionment = parts[2];
+    const pinecone = await initPinecone(envrionment,pineconeEnv.apikey)
+
     const currentQuestion = messages[messages.length-1]
-    const index = pinecone.Index(pineVar.index);
+    const index = pinecone.Index(indexname);
+    
     /* create vectorstore*/
-    const vectorStore = await OpenAIEmbeddings(key,currentQuestion)
+    const vectorStore = await OpenAIEmbeddings(openAIkey,currentQuestion)
     const vector= vectorStore.data[0].embedding 
 
      const queryRequest = {
@@ -50,6 +51,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
     let contexts = []
 
+    console.log(queryResponse.matches)
+
     if(queryResponse.matches){
       for (let i= queryResponse.matches?.length-1; i>=0;i--){
         const metadata = queryResponse.matches[i].metadata as MetaData
@@ -58,7 +61,6 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
     }
-
 
     let promptToSend = createSystemPrompt(currentQuestion.content,contexts)
 
@@ -81,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     encoding.free();
 
-    const stream = await OpenAIStream(model, promptToSend, key, oldMessages);
+    const stream = await OpenAIStream(model, promptToSend, openAIkey, oldMessages);
 
     return new Response(stream);
   } catch (error) {

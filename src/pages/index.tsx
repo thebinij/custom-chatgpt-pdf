@@ -5,11 +5,10 @@ import { Navbar } from "@/components/Mobile/Navbar";
 import { LeftBar } from "@/components/LeftSideBar/LeftBar";
 import { ChatSection } from "@/components/Chat/ChatSection";
 import { v4 as uuidv4 } from "uuid";
-import {  IconArrowBarRight } from "@tabler/icons-react";
+import { IconArrowBarRight } from "@tabler/icons-react";
 import { ChatBody, Conversation, Message } from "@/types/chat";
 import { ErrorMessage } from "@/types/error";
 import { KeyValuePair } from "@/types/data";
-import { Prompt } from "@/types/prompt";
 import { LatestExportFormat, SupportedExportFormats } from "@/types/export";
 import {
   OpenAIModel,
@@ -22,13 +21,16 @@ import {
   saveConversations,
   updateConversation,
 } from "@/utils/app/converstion";
-import { DEFAULT_SYSTEM_PROMPT, FETCHING_ERROR_MSG } from "@/utils/app/const";
+import {
+  FETCHING_ERROR_MSG,
+  FETCHING_ERROR_PINECONE,
+} from "@/utils/app/const";
 import { exportData, importData } from "@/utils/app/importExport";
 import {
   cleanConversationHistory,
   cleanSelectedConversation,
 } from "@/utils/app/clean";
-import { PineConeVar } from "@/types/pinecone";
+import { PineConeEnv, PineconeStats } from "@/types/pinecone";
 
 interface HomeProps {
   serverSideApiKeyIsSet: boolean;
@@ -39,26 +41,25 @@ const Home: React.FC<HomeProps> = ({
   serverSideApiKeyIsSet,
   defaultModelId,
 }) => {
-
   const [loading, setLoading] = useState<boolean>(false);
   const [lightMode, setLightMode] = useState<"dark" | "light">("dark");
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
   const [models, setModels] = useState<OpenAIModel[]>([]);
   const [apiKey, setApiKey] = useState<string>("");
-  const [pineconeVar, setPineconeVar] = useState<PineConeVar>({
-    apikey:"",
-    index:"",
-    projectId:"",
-    environment:""
-  })
+  const [pineconeEnv, setPineconeEnv] = useState<PineConeEnv>({
+    apikey: "",
+    indexURL: "",
+  });
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation>();
-  const [modelError, setModelError] = useState<ErrorMessage |null>(null)
-  // const [showRightBar, setShowRightBar] = useState<boolean>(true);
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [modelError, setModelError] = useState<ErrorMessage | null>(null);
   const [currentMessage, setCurrentMessage] = useState<Message>();
   const [messageIsStreaming, setMessageIsStreaming] = useState<boolean>(false);
+  const [pineconeError, setPineconeError] = useState<ErrorMessage | null>(null);
+  const [pineconeStats, setPineconeStats] = useState<PineconeStats | null>(
+    null
+  );
 
   // REFS ----------------------------------------------
   const stopConversationRef = useRef<boolean>(false);
@@ -73,20 +74,15 @@ const Home: React.FC<HomeProps> = ({
     localStorage.setItem("apiKey", apiKey);
   };
 
-  const handlePineConeVarChange = (pinecone: PineConeVar) => {
-    setPineconeVar(pinecone);
-    localStorage.setItem("pineconeVar", JSON.stringify(pinecone));
+  const handlePineConeEnvChange = (pinecone: PineConeEnv) => {
+    setPineconeEnv(pinecone);
+    localStorage.setItem("pineconeEnv", JSON.stringify(pinecone));
   };
 
   const handleToggleChatbar = () => {
     setShowSidebar(!showSidebar);
     localStorage.setItem("showChatbar", JSON.stringify(!showSidebar));
   };
-
-  // const handleToggleRightbar = () => {
-  //   setShowRightBar(!showRightBar);
-  //   localStorage.setItem('showRightBar', JSON.stringify(!showRightBar));
-  // };
 
 
   // CONVERSATION OPERATIONS  --------------------------------------------
@@ -103,7 +99,6 @@ const Home: React.FC<HomeProps> = ({
         maxLength: OpenAIModels[defaultModelId].maxLength,
         tokenLimit: OpenAIModels[defaultModelId].tokenLimit,
       },
-      prompt: DEFAULT_SYSTEM_PROMPT
     };
 
     const updatedConversations = [...conversations, newConversation];
@@ -135,8 +130,6 @@ const Home: React.FC<HomeProps> = ({
         name: "New conversation",
         messages: [],
         model: OpenAIModels[defaultModelId],
-        prompt: DEFAULT_SYSTEM_PROMPT,
-
       });
       localStorage.removeItem("selectedConversation");
     }
@@ -168,13 +161,9 @@ const Home: React.FC<HomeProps> = ({
       id: uuidv4(),
       name: "New conversation",
       messages: [],
-      model: OpenAIModels[defaultModelId],
-      prompt: DEFAULT_SYSTEM_PROMPT,
-
+      model: OpenAIModels[defaultModelId]
     });
     localStorage.removeItem("selectedConversation");
-
-  
   };
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -191,7 +180,6 @@ const Home: React.FC<HomeProps> = ({
 
     setConversations(history);
     setSelectedConversation(history[history.length - 1]);
-
   };
 
   const handleEditMessage = (message: Message, messageIndex: number) => {
@@ -221,10 +209,10 @@ const Home: React.FC<HomeProps> = ({
     }
   };
 
-  // FETCH MODELS ----------------------------------------------
+  // FETCH MODELS AND PINECONE STATs ----------------------------------------------
   const fetchModels = async (key: string) => {
     const error = FETCHING_ERROR_MSG;
-    
+
     const response = await fetch("/api/models", {
       method: "POST",
       headers: {
@@ -258,7 +246,38 @@ const Home: React.FC<HomeProps> = ({
     setModelError(null);
   };
 
+  // FETCH PINECONE STATS ----------------------------------------------
+  const fetchPineconeStat = async (pineconeEnv: PineConeEnv) => {
+    const error = FETCHING_ERROR_PINECONE;
+    const response = await fetch("/api/pinecone", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(pineconeEnv),
+    });
 
+    if (!response.ok) {
+      try {
+        const data = await response.json();
+        Object.assign(error, {
+          code: data.error?.code,
+          messageLines: [data.error?.message],
+        });
+      } catch (e) {}
+      setPineconeError(error);
+      return;
+    }
+
+    const data = await response.json();
+
+    if (!data) {
+      setPineconeError(error);
+      return;
+    }
+    setPineconeStats(data);
+    setPineconeError(null);
+  };
 
   // FETCH RESPONSE ----------------------------------------------
   const handleSend = async (message: Message, deleteCount = 0) => {
@@ -289,14 +308,14 @@ const Home: React.FC<HomeProps> = ({
       const chatBody: ChatBody = {
         model: updatedConversation.model,
         messages: updatedConversation.messages,
-        key: apiKey,
-        prompt: updatedConversation.prompt,
+        openAIkey: apiKey,
+        pineconeEnv: pineconeEnv,
       };
       const controller = new AbortController();
-      const response = await fetch('/api/chat', {
-        method: 'POST',
+      const response = await fetch("/api/chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         signal: controller.signal,
         body: JSON.stringify(chatBody),
@@ -319,7 +338,7 @@ const Home: React.FC<HomeProps> = ({
       if (updatedConversation.messages.length === 1) {
         const { content } = message;
         const customName =
-          content.length > 30 ? content.substring(0, 30) + '...' : content;
+          content.length > 30 ? content.substring(0, 30) + "..." : content;
 
         updatedConversation = {
           ...updatedConversation,
@@ -333,7 +352,7 @@ const Home: React.FC<HomeProps> = ({
       const decoder = new TextDecoder();
       let done = false;
       let isFirst = true;
-      let text = '';
+      let text = "";
 
       while (!done) {
         if (stopConversationRef.current === true) {
@@ -351,7 +370,7 @@ const Home: React.FC<HomeProps> = ({
           isFirst = false;
           const updatedMessages: Message[] = [
             ...updatedConversation.messages,
-            { role: 'assistant', content: chunkValue  },
+            { role: "assistant", content: chunkValue },
           ];
 
           updatedConversation = {
@@ -371,7 +390,7 @@ const Home: React.FC<HomeProps> = ({
               }
 
               return message;
-            },
+            }
           );
 
           updatedConversation = {
@@ -392,7 +411,7 @@ const Home: React.FC<HomeProps> = ({
           }
 
           return conversation;
-        },
+        }
       );
 
       if (updatedConversations.length === 0) {
@@ -414,7 +433,15 @@ const Home: React.FC<HomeProps> = ({
       fetchModels(apiKey);
     }
   }, [apiKey]);
+
   
+
+  useEffect(() => {
+    if (pineconeEnv.apikey && pineconeEnv.indexURL) {
+      fetchPineconeStat(pineconeEnv);
+    }
+  }, [pineconeEnv]);
+
   useEffect(() => {
     if (currentMessage) {
       handleSend(currentMessage);
@@ -442,8 +469,7 @@ const Home: React.FC<HomeProps> = ({
       fetchModels("");
     }
 
-    const pineconeVar = localStorage.getItem("pineconeVar");
-    if(pineconeVar) setPineconeVar(JSON.parse(pineconeVar))
+    const pineconeEnv = localStorage.getItem("pineconeEnv");
 
     if (window.innerWidth < 640) {
       setShowSidebar(false);
@@ -478,10 +504,9 @@ const Home: React.FC<HomeProps> = ({
         name: "New conversation",
         messages: [],
         model: OpenAIModels[defaultModelId],
-        prompt: DEFAULT_SYSTEM_PROMPT,
       });
     }
-  }, [serverSideApiKeyIsSet,defaultModelId]);
+  }, [serverSideApiKeyIsSet, defaultModelId]);
 
   return (
     <>
@@ -544,46 +569,21 @@ const Home: React.FC<HomeProps> = ({
                 conversation={selectedConversation}
                 messageIsStreaming={messageIsStreaming}
                 apiKey={apiKey}
-                pineconeVar={pineconeVar}
-                onPineConeVarChange={handlePineConeVarChange}
+                pineconeEnv={pineconeEnv}
+                pineconeStats={pineconeStats}
+                pineconeError={pineconeError}
+                onPineconeEnvChange={handlePineConeEnvChange}
                 serverSideApiKeyIsSet={serverSideApiKeyIsSet}
                 defaultModelId={defaultModelId}
                 modelError={modelError}
                 models={models}
                 loading={loading}
-                prompts={prompts}
                 onSend={handleSend}
                 onUpdateConversation={handleUpdateConversation}
                 onEditMessage={handleEditMessage}
-                stopConversationRef={stopConversationRef} 
-           />
+                stopConversationRef={stopConversationRef}
+              />
             </div>
-
-            {/* {showRightBar ? (
-              <div>
-                <RightBar
-                  prompts={prompts}
-                  pineconeVar={pineconeVar}
-                />
-                <button
-                  className="fixed top-5 right-[270px] z-50 h-7 w-7 hover:text-gray-400 dark:text-white dark:hover:text-gray-300 sm:top-0.5 sm:right-[270px] sm:h-8 sm:w-8 sm:text-neutral-700"
-                  onClick={handleToggleRightbar}
-                >
-                  <IconArrowBarRight />
-                </button>
-                <div
-                  onClick={handleToggleRightbar}
-                  className="absolute top-0 left-0 z-10 w-full h-full bg-black opacity-70 sm:hidden"
-                ></div>
-              </div>
-            ) : (
-              <button
-                className="fixed top-2.5 right-4 z-50 h-7 w-7 text-white hover:text-gray-400 dark:text-white dark:hover:text-gray-300 sm:top-0.5 sm:right-4 sm:h-8 sm:w-8 sm:text-neutral-700"
-                onClick={handleToggleRightbar}
-              >
-                <IconArrowBarLeft />
-              </button>
-            )} */}
           </div>
         </main>
       )}
