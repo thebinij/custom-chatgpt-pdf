@@ -1,4 +1,4 @@
-import { Message } from '@/types/chat';
+import { Message, SourceDocument } from '@/types/chat';
 import { OpenAIModel } from '@/types/openai';
 import {
   createParser,
@@ -6,6 +6,7 @@ import {
   ReconnectInterval,
 } from 'eventsource-parser';
 import { DEFAULT_SYSTEM_PROMPT, OPENAI_API_HOST } from '../app/const';
+import { PineConeEnv } from '@/types/pinecone';
 
 export class OpenAIError extends Error {
   type: string;
@@ -68,7 +69,9 @@ export const OpenAIStream = async (
   systemPrompt: string,
   key: string,
   messages: Message[],
+  sourceDocs: SourceDocument[]
 ) => {
+  console.log(systemPrompt)
   const res = await fetch(`${OPENAI_API_HOST}/v1/chat/completions`, {
     headers: {
       'Content-Type': 'application/json',
@@ -88,7 +91,7 @@ export const OpenAIStream = async (
         ...messages,
       ],
       max_tokens: 2000,
-      temperature: 0.5,
+      temperature: 0.7,
       stream: true,
     }),
   });
@@ -114,9 +117,15 @@ export const OpenAIStream = async (
     }
   }
 
+  const sourceDocsUint8Array = new TextEncoder().encode(JSON.stringify(sourceDocs));
+
   const stream = new ReadableStream({
     async start(controller) {
-      const onParse = (event: ParsedEvent | ReconnectInterval) => {
+    controller.enqueue(sourceDocsUint8Array);
+     const endOfSourceDoc = new TextEncoder().encode(JSON.stringify("[END_SOURCE]"));
+     controller.enqueue(endOfSourceDoc);
+
+       const onParse = (event: ParsedEvent | ReconnectInterval) => {
         if (event.type === 'event') {
           const data = event.data;
 
@@ -124,7 +133,6 @@ export const OpenAIStream = async (
             controller.close();
             return;
           }
-
           try {
             const json = JSON.parse(data);
             const text = json.choices[0].delta.content;
@@ -144,7 +152,6 @@ export const OpenAIStream = async (
       }
     },
   });
-
   return stream;
 };
 
@@ -160,3 +167,19 @@ export const createSystemPrompt = (question:string, contexts:string[]) => {
     .replace('{context}', context);
   return systemPrompt;
 };
+
+export  function parseEnv(pineconeEnv: PineConeEnv) {
+  const URL = pineconeEnv.indexURL;
+  const parts = URL.split("."); // Split the URL by dot
+  const indexname = parts[0].split("-")[0];
+  const environment = parts[2];
+
+  if (!indexname || !environment || !pineconeEnv.apikey ) {
+    throw new Error("Invalid URL format. Missing indexname or environment.");
+  }
+  return {
+    indexname: indexname,
+    environment: environment,
+    apikey:pineconeEnv.apikey
+  };
+}

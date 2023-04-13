@@ -21,10 +21,7 @@ import {
   saveConversations,
   updateConversation,
 } from "@/utils/app/converstion";
-import {
-  FETCHING_ERROR_MSG,
-  FETCHING_ERROR_PINECONE,
-} from "@/utils/app/const";
+import { FETCHING_ERROR_MSG, FETCHING_ERROR_PINECONE } from "@/utils/app/const";
 import { exportData, importData } from "@/utils/app/importExport";
 import {
   cleanConversationHistory,
@@ -83,7 +80,6 @@ const Home: React.FC<HomeProps> = ({
     setShowSidebar(!showSidebar);
     localStorage.setItem("showChatbar", JSON.stringify(!showSidebar));
   };
-
 
   // CONVERSATION OPERATIONS  --------------------------------------------
   const handleNewConversation = () => {
@@ -161,7 +157,7 @@ const Home: React.FC<HomeProps> = ({
       id: uuidv4(),
       name: "New conversation",
       messages: [],
-      model: OpenAIModels[defaultModelId]
+      model: OpenAIModels[defaultModelId],
     });
     localStorage.removeItem("selectedConversation");
   };
@@ -279,6 +275,17 @@ const Home: React.FC<HomeProps> = ({
     setPineconeError(null);
   };
 
+  const splitMessage = (content:string ): { message: string, source: string } => {
+    const sourceEndIndex = content.indexOf("[END_SOURCE]");
+    if (sourceEndIndex !== -1) {
+      const source = content.substring(0, sourceEndIndex - 1);
+      const message = content.substring(sourceEndIndex + 13); // 13 is the length of "[END_SOURCE]"
+      return { source, message };
+    }
+    return { source: "", message: content };
+  };
+
+  
   // FETCH RESPONSE ----------------------------------------------
   const handleSend = async (message: Message, deleteCount = 0) => {
     if (selectedConversation) {
@@ -312,6 +319,7 @@ const Home: React.FC<HomeProps> = ({
         pineconeEnv: pineconeEnv,
       };
       const controller = new AbortController();
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -363,23 +371,25 @@ const Home: React.FC<HomeProps> = ({
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         const chunkValue = decoder.decode(value);
+        text +=  isFirst ? splitMessage(chunkValue).message :chunkValue;
 
-        text += chunkValue;
 
         if (isFirst) {
           isFirst = false;
+          const {message ,source}= splitMessage(chunkValue)
           const updatedMessages: Message[] = [
             ...updatedConversation.messages,
-            { role: "assistant", content: chunkValue },
+            { role: "assistant", content: message, source:source },
           ];
-
+     
           updatedConversation = {
             ...updatedConversation,
             messages: updatedMessages,
           };
 
-          setSelectedConversation(updatedConversation);
-        } else {
+         setSelectedConversation(updatedConversation);
+        }
+         else {
           const updatedMessages: Message[] = updatedConversation.messages.map(
             (message, index) => {
               if (index === updatedConversation.messages.length - 1) {
@@ -392,13 +402,12 @@ const Home: React.FC<HomeProps> = ({
               return message;
             }
           );
-
           updatedConversation = {
             ...updatedConversation,
             messages: updatedMessages,
           };
-
-          setSelectedConversation(updatedConversation);
+       
+        setSelectedConversation(updatedConversation);
         }
       }
 
@@ -434,8 +443,6 @@ const Home: React.FC<HomeProps> = ({
     }
   }, [apiKey]);
 
-  
-
   useEffect(() => {
     if (pineconeEnv.apikey && pineconeEnv.indexURL) {
       fetchPineconeStat(pineconeEnv);
@@ -469,7 +476,10 @@ const Home: React.FC<HomeProps> = ({
       fetchModels("");
     }
 
-    const pineconeEnv = localStorage.getItem("pineconeEnv");
+    const pineconeVar = localStorage.getItem("pineconeEnv");
+    if (pineconeVar) {
+      setPineconeEnv(JSON.parse(pineconeVar));
+    }
 
     if (window.innerWidth < 640) {
       setShowSidebar(false);

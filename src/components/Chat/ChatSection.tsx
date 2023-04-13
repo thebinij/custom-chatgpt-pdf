@@ -1,4 +1,4 @@
-import { Conversation, Message } from "@/types/chat";
+import { Conversation, Message, SourceDocument } from "@/types/chat";
 import { KeyValuePair } from "@/types/data";
 import { ErrorMessage } from "@/types/error";
 import { OpenAIModel, OpenAIModelID } from "@/types/openai";
@@ -35,7 +35,7 @@ interface Props {
   messageIsStreaming: boolean;
   modelError: ErrorMessage | null;
   loading: boolean;
-  onSend: (message: Message, deleteCount?: number) => void;
+  onSend: (message: Message,  deleteCount?: number) => void;
   onUpdateConversation: (
     conversation: Conversation,
     data: KeyValuePair

@@ -3,13 +3,12 @@ import { OpenAIModel } from "@/types/openai";
 import { IconPlayerStop, IconRepeat, IconSend } from "@tabler/icons-react";
 import {
   FC,
+  KeyboardEvent,
   MutableRefObject,
   useEffect,
   useRef,
   useState,
 } from "react";
-
-
 
 interface Props {
   messageIsStreaming: boolean;
@@ -32,15 +31,11 @@ export const ChatInput: FC<Props> = ({
   stopConversationRef,
   textareaRef,
 }) => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [sourceDocs, setSourceDocs] = useState<Document[]>([]);
   const [content, setContent] = useState<string>();
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [activePromptIndex, setActivePromptIndex] = useState(0);
   const [variables, setVariables] = useState<string[]>([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const promptListRef = useRef<HTMLUListElement | null>(null);
-
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -66,7 +61,7 @@ export const ChatInput: FC<Props> = ({
       return;
     }
 
-    onSend({ role: "user", content });
+    onSend({ role: "user", content, source:"" });
     setContent("");
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
@@ -89,8 +84,12 @@ export const ChatInput: FC<Props> = ({
     return mobileRegex.test(userAgent);
   };
 
- 
-
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !isTyping && !isMobile() && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
   const parseVariables = (content: string) => {
     const regex = /{{(.*?)}}/g;
@@ -103,8 +102,6 @@ export const ChatInput: FC<Props> = ({
 
     return foundVariables;
   };
-
-
 
   const handleSubmit = (updatedVariables: string[]) => {
     const newContent = content?.replace(/{{(.*?)}}/g, (match, variable) => {
@@ -133,12 +130,10 @@ export const ChatInput: FC<Props> = ({
         textareaRef?.current?.scrollHeight > 400 ? "auto" : "hidden"
       }`;
     }
-  }, [content,textareaRef]);
+  }, [content, textareaRef]);
 
   useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      
-    };
+    const handleOutsideClick = (e: MouseEvent) => {};
 
     window.addEventListener("click", handleOutsideClick);
 
@@ -183,16 +178,13 @@ export const ChatInput: FC<Props> = ({
                   : "hidden"
               }`,
             }}
-            placeholder={
-              loading
-                ? `Waiting for response...`
-                : `Ask anything about your source documents`
-            }
+            placeholder="Ask anything about your source documents"
             value={content}
             rows={1}
             onCompositionStart={() => setIsTyping(true)}
             onCompositionEnd={() => setIsTyping(false)}
             onChange={handleChange}
+            onKeyDown={handleKeyDown}
           />
           <button
             className="absolute p-1 rounded-sm right-2 top-2 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"

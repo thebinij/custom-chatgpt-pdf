@@ -1,11 +1,13 @@
-import { Message } from '@/types/chat';
-import { IconCheck, IconCopy, IconEdit } from '@tabler/icons-react';
-import { FC, memo, useEffect, useRef, useState } from 'react';
-import rehypeMathjax from 'rehype-mathjax';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import { CodeBlock } from '../Markdown/CodeBlock';
-import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
+import { Message, SourceDocument } from "@/types/chat";
+import { IconCheck, IconCopy, IconEdit } from "@tabler/icons-react";
+import { FC, memo, useEffect, useRef, useState } from "react";
+import rehypeMathjax from "rehype-mathjax";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import { CodeBlock } from "../Markdown/CodeBlock";
+import { MemoizedReactMarkdown } from "../Markdown/MemoizedReactMarkdown";
+import { Accordion, AccordionItem, AccordionTrigger } from "../Accordion";
+import { AccordionContent } from "@radix-ui/react-accordion";
 
 interface Props {
   message: Message;
@@ -27,11 +29,11 @@ export const ChatMessage: FC<Props> = memo(
     };
 
     const handleInputChange = (
-      event: React.ChangeEvent<HTMLTextAreaElement>,
+      event: React.ChangeEvent<HTMLTextAreaElement>
     ) => {
       setMessageContent(event.target.value);
       if (textareaRef.current) {
-        textareaRef.current.style.height = 'inherit';
+        textareaRef.current.style.height = "inherit";
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       }
     };
@@ -44,7 +46,7 @@ export const ChatMessage: FC<Props> = memo(
     };
 
     const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+      if (e.key === "Enter" && !isTyping && !e.shiftKey) {
         e.preventDefault();
         handleEditMessage();
       }
@@ -52,7 +54,6 @@ export const ChatMessage: FC<Props> = memo(
 
     const copyOnClick = () => {
       if (!navigator.clipboard) return;
-
       navigator.clipboard.writeText(message.content).then(() => {
         setMessageCopied(true);
         setTimeout(() => {
@@ -63,7 +64,7 @@ export const ChatMessage: FC<Props> = memo(
 
     useEffect(() => {
       if (textareaRef.current) {
-        textareaRef.current.style.height = 'inherit';
+        textareaRef.current.style.height = "inherit";
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       }
     }, [isEditing]);
@@ -71,19 +72,19 @@ export const ChatMessage: FC<Props> = memo(
     return (
       <div
         className={`group px-4 ${
-          message.role === 'assistant'
-            ? 'border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100'
-            : 'border-b border-black/10 bg-white text-gray-800 dark:border-gray-900/50 dark:bg-[#343541] dark:text-gray-100'
+          message.role === "assistant"
+            ? "border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100"
+            : "border-b border-black/10 bg-white text-gray-800 dark:border-gray-900/50 dark:bg-[#343541] dark:text-gray-100"
         }`}
-        style={{ overflowWrap: 'anywhere' }}
+        style={{ overflowWrap: "anywhere" }}
       >
         <div className="relative flex gap-4 p-4 m-auto text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] text-right font-bold">
-            {message.role === 'assistant' ? `AI` : `You`}:
+            {message.role === "assistant" ? `AI` : `You`}:
           </div>
 
           <div className="prose mt-[-2px] w-full dark:prose-invert">
-            {message.role === 'user' ? (
+            {message.role === "user" ? (
               <div className="flex w-full">
                 {isEditing ? (
                   <div className="flex flex-col w-full">
@@ -96,12 +97,12 @@ export const ChatMessage: FC<Props> = memo(
                       onCompositionStart={() => setIsTyping(true)}
                       onCompositionEnd={() => setIsTyping(false)}
                       style={{
-                        fontFamily: 'inherit',
-                        fontSize: 'inherit',
-                        lineHeight: 'inherit',
-                        padding: '0',
-                        margin: '0',
-                        overflow: 'hidden',
+                        fontFamily: "inherit",
+                        fontSize: "inherit",
+                        lineHeight: "inherit",
+                        padding: "0",
+                        margin: "0",
+                        overflow: "hidden",
                       }}
                     />
 
@@ -111,7 +112,7 @@ export const ChatMessage: FC<Props> = memo(
                         onClick={handleEditMessage}
                         disabled={messageContent.trim().length <= 0}
                       >
-                     Save & Submit
+                        Save & Submit
                       </button>
                       <button
                         className="h-[40px] rounded-md border border-neutral-300 px-4 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
@@ -120,7 +121,7 @@ export const ChatMessage: FC<Props> = memo(
                           setIsEditing(false);
                         }}
                       >
-                       Cancel
+                        Cancel
                       </button>
                     </div>
                   </div>
@@ -134,8 +135,8 @@ export const ChatMessage: FC<Props> = memo(
                   <button
                     className={`absolute translate-x-[1000px] text-gray-500 hover:text-gray-700 focus:translate-x-0 group-hover:translate-x-0 dark:text-gray-400 dark:hover:text-gray-300 ${
                       window.innerWidth < 640
-                        ? 'right-3 bottom-1'
-                        : 'right-0 top-[26px]'
+                        ? "right-3 bottom-1"
+                        : "right-0 top-[26px]"
                     }
                     `}
                     onClick={toggleEditing}
@@ -149,8 +150,8 @@ export const ChatMessage: FC<Props> = memo(
                 <div
                   className={`absolute ${
                     window.innerWidth < 640
-                      ? 'right-3 bottom-1'
-                      : 'right-0 top-[26px] m-0'
+                      ? "right-3 bottom-1"
+                      : "right-0 top-[26px] m-0"
                   }`}
                 >
                   {messagedCopied ? (
@@ -167,20 +168,20 @@ export const ChatMessage: FC<Props> = memo(
                     </button>
                   )}
                 </div>
-
+ 
                 <MemoizedReactMarkdown
                   className="prose dark:prose-invert"
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeMathjax]}
                   components={{
                     code({ node, inline, className, children, ...props }) {
-                      const match = /language-(\w+)/.exec(className || '');
+                      const match = /language-(\w+)/.exec(className || "");
 
                       return !inline && match ? (
                         <CodeBlock
                           key={Math.random()}
                           language={match[1]}
-                          value={String(children).replace(/\n$/, '')}
+                          value={String(children).replace(/\n$/, "")}
                           {...props}
                         />
                       ) : (
@@ -214,12 +215,48 @@ export const ChatMessage: FC<Props> = memo(
                 >
                   {message.content}
                 </MemoizedReactMarkdown>
+
+                {message.source && JSON.parse(message.source) && (
+                        <div
+                          className="mt-4"
+                          key={`sourceDocsAccordion-index`}
+                        >
+                          <b>SOURCE DOCS:</b>
+                          <Accordion
+                            type="single"
+                            collapsible
+                            className="flex-col p-1 md:px-5"
+                          >
+                            {JSON.parse(message.source).map((doc:SourceDocument, index:any) => (
+                              <div key={`messageSourceDocs-${index}`}>
+                                <AccordionItem value={`item-${index}`}>
+                                  <AccordionTrigger>
+                                    <h3 className="text-left" >{index+1}) {doc.data.substring(0,100)}</h3>
+                                  </AccordionTrigger>
+                                  <AccordionContent>
+                                    <p className="mb-2 font-mono text-sm text-neutral-600 dark:text-slate-300">
+                                    {doc.data}
+                                    </p>
+                                    <p className="my-2 ">
+                                      <b>Source:</b> {doc.filename}
+                                    </p>
+                                    <p className="my-2 ">
+                                      <b>Score:</b> {doc.score}
+                                    </p>
+                                  </AccordionContent>
+                                </AccordionItem>
+                              </div>
+                            ))}
+                          </Accordion>
+                        </div>
+                      )}
+ 
               </>
             )}
           </div>
         </div>
       </div>
     );
-  },
+  }
 );
-ChatMessage.displayName = 'ChatMessage';
+ChatMessage.displayName = "ChatMessage";
