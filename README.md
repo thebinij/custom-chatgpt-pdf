@@ -1,4 +1,4 @@
-## GPT_LANGCHAIN
+## CUSTOM_GPT_BOT
 
 **Docker**
 
